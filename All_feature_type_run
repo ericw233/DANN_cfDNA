@@ -1,0 +1,8 @@
+#!/bin/bash
+feature_type_list=(Cnv Frag Griffin Arm MCMS)
+input_size=(2500 1200 2600 800 200)
+for i in {0..4}
+do
+    python ./DANN_run.py ${feature_type_list[i]} 1D ${input_size[i]} 100 1000 /mnt/binf/eric/CNN_JulyResults/DANN_1D_0712 /mnt/binf/eric/Mercury_June2023_new/Feature_all_June2023_R01BMatch_Domain.csv
+done
+
