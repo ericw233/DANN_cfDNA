@@ -6,7 +6,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 from pad_and_reshape import pad_and_reshape, pad_and_reshape_1D
 
-def load_data(data_dir="/mnt/binf/eric/Mercury_June2023_new/Feature_all_June2023_R01BMatch.csv", input_size=900, feature_type = "Arm"):
+def load_data(data_dir="/mnt/binf/eric/Mercury_June2023_new/Feature_all_June2023_R01BMatch_DomainKAG9_Cluster.csv", input_size=900, feature_type = "Arm"):
     # Read data from CSV file
     data = pd.read_csv(data_dir).dropna(axis=1)
 
@@ -53,7 +53,7 @@ def load_data(data_dir="/mnt/binf/eric/Mercury_June2023_new/Feature_all_June2023
     return data, X_train_tensor, y_train_tensor, d_train_tensor, X_test_tensor, y_test_tensor, d_test_tensor, X_all_tensor, y_all_tensor, d_all_tensor, train_sampleid
 
 
-def load_data_1D(data_dir="/mnt/binf/eric/Mercury_June2023_new/Feature_all_June2023_R01BMatch.csv", input_size=900, feature_type = "Arm"):
+def load_data_1D(data_dir="/mnt/binf/eric/Mercury_June2023_new/Feature_all_June2023_R01BMatch_DomainKAG9_Cluster.csv", input_size=900, feature_type = "Arm"):
     # Read data from CSV file
     data = pd.read_csv(data_dir).dropna(axis=1)
 

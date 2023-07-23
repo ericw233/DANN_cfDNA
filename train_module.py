@@ -6,8 +6,8 @@ from sklearn.metrics import roc_auc_score
 from copy import deepcopy
 from ray.air import Checkpoint, session
 
-from model import DANN_1D
-from load_data import load_data_1D
+from model import DANN_1D, DANN
+from load_data import load_data_1D, load_data
 
 def train_module(config, data_dir, input_size, feature_type, dim):
     # Set the device
@@ -21,13 +21,13 @@ def train_module(config, data_dir, input_size, feature_type, dim):
                     conv1=config["conv1"], pool1=config["pool1"], drop1=config["drop1"], 
                     conv2=config["conv2"], pool2=config["pool2"], drop2=config["drop2"], 
                     fc1=config["fc1"], fc2=config["fc2"], drop3=config["drop3"])
-    # else:
-    #     _, X_train_tensor, y_train_tensor, X_test_tensor, y_test_tensor, X_all_tensor, y_all_tensor, _ = load_data(data_dir, input_size, feature_type)         
-    #     model = CNN(input_size=input_size, num_class=2, 
-    #                 out1=config["out1"], out2=config["out2"], 
-    #                 conv1=config["conv1"], pool1=config["pool1"], drop1=config["drop1"], 
-    #                 conv2=config["conv2"], pool2=config["pool2"], drop2=config["drop2"], 
-    #                 fc1=config["fc1"], fc2=config["fc2"], drop3=config["drop3"])
+    else:
+        _, X_train_tensor, y_train_tensor, d_train_tensor, X_test_tensor, y_test_tensor, d_test_tensor, X_all_tensor, _, _, _ = load_data(data_dir, input_size, feature_type)    
+        model = DANN(input_size=input_size, num_class=2, num_domain=2,
+                    out1=config["out1"], out2=config["out2"], 
+                    conv1=config["conv1"], pool1=config["pool1"], drop1=config["drop1"], 
+                    conv2=config["conv2"], pool2=config["pool2"], drop2=config["drop2"], 
+                    fc1=config["fc1"], fc2=config["fc2"], drop3=config["drop3"])
 
     model.to(device)
 
@@ -83,17 +83,25 @@ def train_module(config, data_dir, input_size, feature_type, dim):
             batch_y = y_train_tensor[batch_start:batch_end]
             batch_d = d_train_tensor[batch_start:batch_end]
             
+            batch_X_source = batch_X[batch_d == 0]
+            batch_y_source = batch_y[batch_d == 0]
+            
             batch_X = batch_X.to(device)
             batch_y = batch_y.to(device)
             batch_d = batch_d.to(device)
+
+            batch_X_source = batch_X_source.to(device)
+            batch_y_source = batch_y_source.to(device)
             
             ##### source domain
             # Zero parameter gradients
             optimizer_extractor.zero_grad()
             optimizer_task.zero_grad()
+            optimizer_domain.zero_grad()
                         
             # Forward pass
-            outputs_task, outputs_domain = model(batch_X, alpha)
+            outputs_task, _ = model(batch_X_source, alpha)
+            _, outputs_domain = model(batch_X, alpha)
             
             # calculate task and domain loss
             loss_task = criterion_task(outputs_task, batch_y)
@@ -104,13 +112,14 @@ def train_module(config, data_dir, input_size, feature_type, dim):
             loss.backward()
             optimizer_extractor.step()
             optimizer_task.step()
+            optimizer_domain.step()
             
             # Print the loss after every epoch
-        train_auc = roc_auc_score(
-            batch_y.to('cpu').detach().numpy(), outputs_task.to('cpu').detach().numpy()
-        )
+        # train_auc = roc_auc_score(
+        #     batch_y.to('cpu').detach().numpy(), outputs_task.to('cpu').detach().numpy()
+        # )
         print(f"--------   Epoch: {epoch+1}/{num_epochs}, i: {ith}   --------")
-        print(f"Train AUC: {train_auc.item():.4f}, Train total loss: {loss.item():.4f}, Train task loss: {loss_task.item():.4f}, ")
+        print(f"Train total loss: {loss.item():.4f}, Train task loss: {loss_task.item():.4f}, ")
         print("--------------------------------------")
             
 
@@ -124,7 +133,7 @@ def train_module(config, data_dir, input_size, feature_type, dim):
 
             test_loss = criterion_task(test_outputs, y_test_tensor.to("cpu"))
             test_auc = roc_auc_score(y_test_tensor.to("cpu"), test_outputs.to("cpu"))
-            print(f" Test AUC: {test_auc.item():.4f}, Test Loss: {test_loss.item():.4f}")
+            print(f"Test AUC: {test_auc.item():.4f}, Test Loss: {test_loss.item():.4f}")
             print("***************************")
 
             # Early stopping check
@@ -151,7 +160,8 @@ def train_module(config, data_dir, input_size, feature_type, dim):
             {"testloss": float(test_loss.item()), "testauc": test_auc},
             checkpoint=checkpoint,
         )
-        
+    
+    model.train()    
     model.load_state_dict(best_model)
     # torch.save(model,f"/mnt/binf/eric/CNN_1D_RayTune/{feature_type}_CNN_1D_RayTune.pt")
     print("Training module complete")

@@ -1,8 +1,9 @@
 import torch
 import torch.nn as nn
 import os
+import sys
 
-from model import DANN_1D
+from model import DANN_1D, DANN
 from train_module import train_module
 
 # ray tune
@@ -49,7 +50,7 @@ def ray_tune(num_samples=200, max_num_epochs=1000, gpus_per_trial=1,
     if not os.path.exists(f"{output_path}/"):
         os.makedirs(f"{output_path}/")
         
-    # log_output = open(f"{output_path}/{feature_type}_log_ouput.txt", "w" )
+    # log_output = open(f"{output_path}/{feature_type}_raytune_log_ouput.txt", "w" )
     # sys.stdout = log_output
     
     result = tune.run(
@@ -64,17 +65,24 @@ def ray_tune(num_samples=200, max_num_epochs=1000, gpus_per_trial=1,
         scheduler=scheduler
     )
     
-    best_trial = result.get_best_trial(metric = "testloss", mode = "min", scope = "all")
+    best_trial = result.get_best_trial(metric = "testloss", mode = "min", scope = "last")
     print(f"Best trial config: {best_trial.config}")
     print(f"Best trial final validation loss: {best_trial.last_result['testloss']}")
     print(f"Best trial final validation auc: {best_trial.last_result['testauc']}")
 
-    best_trained_model = DANN_1D(input_size=input_size, num_class=2, num_domain=2,
-                            out1=best_trial.config["out1"], out2=best_trial.config["out2"], 
-                            conv1=best_trial.config["conv1"], pool1=best_trial.config["pool1"], drop1=best_trial.config["drop1"], 
-                            conv2=best_trial.config["conv2"], pool2=best_trial.config["pool2"], drop2=best_trial.config["drop2"], 
-                            fc1=best_trial.config["fc1"], fc2=best_trial.config["fc2"], drop3=best_trial.config["drop3"])
-    
+    if(dim == "1D"):
+        best_trained_model = DANN_1D(input_size=input_size, num_class=2, num_domain=2,
+                                out1=best_trial.config["out1"], out2=best_trial.config["out2"], 
+                                conv1=best_trial.config["conv1"], pool1=best_trial.config["pool1"], drop1=best_trial.config["drop1"], 
+                                conv2=best_trial.config["conv2"], pool2=best_trial.config["pool2"], drop2=best_trial.config["drop2"], 
+                                fc1=best_trial.config["fc1"], fc2=best_trial.config["fc2"], drop3=best_trial.config["drop3"])
+    else:
+        best_trained_model = DANN(input_size=input_size, num_class=2, num_domain=2,
+                                out1=best_trial.config["out1"], out2=best_trial.config["out2"], 
+                                conv1=best_trial.config["conv1"], pool1=best_trial.config["pool1"], drop1=best_trial.config["drop1"], 
+                                conv2=best_trial.config["conv2"], pool2=best_trial.config["pool2"], drop2=best_trial.config["drop2"], 
+                                fc1=best_trial.config["fc1"], fc2=best_trial.config["fc2"], drop3=best_trial.config["drop3"])
+        
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     best_trained_model.to(device)
 
@@ -82,7 +90,7 @@ def ray_tune(num_samples=200, max_num_epochs=1000, gpus_per_trial=1,
     best_checkpoint = best_trial.checkpoint.to_air_checkpoint()
     best_checkpoint_data = best_checkpoint.to_dict()
     best_trained_model.load_state_dict(best_checkpoint_data["model_state_dict"])
-    torch.save(best_trained_model,f"{output_path}/{feature_type}_DANN_1D_BestRayTune.pt")
+    torch.save(best_trained_model,f"{output_path}/{feature_type}_DANN_{dim}_BestRayTune.pt")
 
     # log_output.close()
     

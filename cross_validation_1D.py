@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import os
 import sys
+import inspect
 
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import KFold
@@ -14,7 +15,7 @@ from load_data import load_data_1D
     
 class DANNwithCV_1D(DANN_1D):
     def __init__(self, config, input_size, num_class, num_domain):
-        model_config=self._match_params(config)
+        model_config,_=self._match_params(config)
         super(DANNwithCV_1D, self).__init__(input_size, num_class, num_domain, **model_config)
         self.batch_size=config["batch_size"]
         self.num_epochs=config["num_epochs"]
@@ -29,12 +30,13 @@ class DANNwithCV_1D(DANN_1D):
         
     def _match_params(self, config):
         model_config={}
-        model_keys=set(self.__annotations__.keys())
+        args = inspect.signature(DANN_1D.__init__).parameters
+        model_keys = [name for name in args if name != 'self']
 
         for key, value in config.items():
             if key in model_keys:
                 model_config[key] = value        
-        return model_config
+        return model_config, model_keys
     
     def data_loader(self, data_dir, input_size, feature_type, R01BTuning):
         self.input_size=input_size
@@ -107,22 +109,36 @@ class DANNwithCV_1D(DANN_1D):
                     p = (ith + epoch * num_iterations) / (self.num_epochs * num_iterations)
                     alpha = 2.0 / (1.0 + np.exp(-10 * p)) - 1.0
                     
-                    batch_X = X_train_fold[batch_start:batch_end].to(device)
-                    batch_y = y_train_fold[batch_start:batch_end].to(device)
-                    batch_d = d_train_fold[batch_start:batch_end].to(device)
+                    batch_X = X_train_fold[batch_start:batch_end]
+                    batch_y = y_train_fold[batch_start:batch_end]
+                    batch_d = d_train_fold[batch_start:batch_end]
                     
+                    batch_X_source = batch_X[batch_d == 0]
+                    batch_y_source = batch_y[batch_d == 0]
+
+                    batch_X = batch_X.to(device)
+                    batch_y = batch_y.to(device)
+                    batch_d = batch_d.to(device)
+
+                    batch_X_source = batch_X_source.to(device)
+                    batch_y_source = batch_y_source.to(device)
+                                        
                     self.optimizer_extractor.zero_grad()
                     self.optimizer_task.zero_grad()
+                    self.optimizer_domain.zero_grad()
                     
-                    outputs_task, outputs_domain = self(batch_X,alpha)
-                    loss_task = self.criterion_task(outputs_task, batch_y)
+                    outputs_task, _ = self(batch_X_source,alpha)
+                    _, outputs_domain = self(batch_X,alpha)
+                    
+                    loss_task = self.criterion_task(outputs_task, batch_y_source)
                     loss_domain = self.criterion_domain(outputs_domain, batch_d)
                     
                     loss = loss_task + self.loss_lambda * loss_domain
                     loss.backward()
                     self.optimizer_extractor.step()
                     self.optimizer_task.step()
-        
+                    self.optimizer_domain.step()
+                    
                 train_auc = roc_auc_score(
                     batch_y.to('cpu').detach().numpy(), outputs_task.to('cpu').detach().numpy()
                 )
@@ -156,7 +172,7 @@ class DANNwithCV_1D(DANN_1D):
             if not os.path.exists(f"{output_path}/Raw/"):
                 os.makedirs(f"{output_path}/Raw/")
              
-            torch.save(self.state_dict(), f"{output_path}/Raw/{self.feature_type}_DANN_cv_fold{fold+1}.pt")
+            torch.save(self, f"{output_path}/Raw/{self.feature_type}_DANN_cv_fold{fold+1}.pt")
             fold_scores.append(val_outputs.detach().cpu().numpy())  # Collect validation scores for the fold
             fold_labels.append(y_val_fold.detach().cpu().numpy())
             fold_numbers.append(np.repeat(fold+1, len(y_val_fold.detach().cpu().numpy())))
@@ -177,7 +193,7 @@ class DANNwithCV_1D(DANN_1D):
                 
                 if not os.path.exists(f"{output_path}/R01BTuned/"):
                     os.makedirs(f"{output_path}/R01BTuned/")           
-                torch.save(self.state_dict(), f"{output_path}/R01BTuned/{self.feature_type}_DANN_cv_fold{fold+1}_R01Btuned.pt")
+                torch.save(self, f"{output_path}/R01BTuned/{self.feature_type}_DANN_cv_fold{fold+1}_R01Btuned.pt")
                         
                 # results of tuned model
                 with torch.no_grad():
