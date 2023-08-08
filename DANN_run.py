@@ -3,6 +3,8 @@ import torch.nn as nn
 from sklearn.metrics import roc_auc_score
 from copy import deepcopy
 import sys
+import os
+import numpy as np
 
 # ray tune package-related functions
 import ray
@@ -18,14 +20,14 @@ from train_and_tune_1D import DANNwithTrainingTuning_1D
 from cross_validation_1D import DANNwithCV_1D
 
 # default value of input_size and feature_type
-feature_type = "MCMS"
+feature_type = "Frag"
 dim = "1D"
-input_size = 200
+input_size = 1200
 tuning_num = 20
 epoch_num = 200
-output_path="/mnt/binf/eric/DANN_JulyResults/DANN_Mercury_1D_0713v2"
-data_dir="/mnt/binf/eric/Mercury_June2023_new/Feature_all_June2023_R01BMatch_Domain.csv"
-config_file = f"/mnt/binf/eric/DANN_JulyResults/DANN_1D_0712/{feature_type}_config.txt"
+output_path="/mnt/binf/eric/DANN_AugResults/DANN_1D_0807_test"
+data_dir="/mnt/binf/eric/Mercury_Aug2023_new/Feature_all_Aug2023_DomainKAG9v1.csv"
+R01BTune=True
 
 best_config={'out1': 32, 'out2': 128, 'conv1': 3, 'pool1': 2, 'drop1': 0.0, 
              'conv2': 4, 'pool2': 1, 'drop2': 0.4, 'fc1': 128, 'fc2': 32, 'drop3': 0.2, 'batch_size': 128, 'num_epochs': 500, 'lambda': 0.1}
@@ -40,11 +42,12 @@ if len(sys.argv) >= 4:
     epoch_num = int(sys.argv[5])
     output_path = sys.argv[6]
     data_dir = sys.argv[7]
+    R01BTune = sys.argv[8]
     print(f"Getting arguments: feature type: {feature_type}, dimension: {dim}, input size: {input_size}, \
-        tuning round: {tuning_num}, epoch num: {epoch_num}, output path: {output_path}, data path: {data_dir}\n")  
+        tuning round: {tuning_num}, epoch num: {epoch_num}, output path: {output_path}, data path: {data_dir}, R01BTune: {R01BTune}\n")  
 else:
     print(f"Not enough inputs, using default arguments: feature type: {feature_type}, input size: {input_size}, \
-        tuning round: {tuning_num}, epoch num: {epoch_num}, output path: {output_path}, data path: {data_dir}\n")
+        tuning round: {tuning_num}, epoch num: {epoch_num}, output path: {output_path}, data path: {data_dir}, R01BTune: {R01BTune}\n")
 
 ## finish loading parameters from external inputs
 
@@ -52,9 +55,29 @@ else:
 num_class = 2
 num_domain = 2
 output_path_cv=f"{output_path}_cv"
+config_file = f"{output_path}/{feature_type}_config.txt"
+if R01BTune == "Yes":
+    R01BTune_flag=True
+else:
+    R01BTune_flag=False
 
-try:
-    best_config, best_testloss=ray_tune(num_samples=tuning_num, 
+
+if os.path.exists(config_file):
+    ##### load best_config from text
+    import ast
+    # Specify the path to the text file
+    with open(config_file, 'r') as cf:
+        config_txt = cf.read()
+    config_dict = ast.literal_eval(config_txt)
+    # Print the dictionary
+    print(config_dict)
+
+    best_config=config_dict
+    print("***********************   Read from existing config results   ***********************************")
+    print(best_config)
+else:
+    try:
+        best_config, best_testloss=ray_tune(num_samples=tuning_num, 
                                 max_num_epochs=epoch_num, 
                                 gpus_per_trial=1,
                                 output_path=output_path,
@@ -62,23 +85,12 @@ try:
                                 input_size=input_size,
                                 feature_type=feature_type,
                                 dim=dim)
-except Exception as e:
-    print("==========   Ray tune failed! An error occurred:", str(e),"   ==========")
+    except Exception as e:
+        print("==========   Ray tune failed! An error occurred:", str(e),"   ==========")
 
-print("***********************   Ray tune finished   ***********************************")
-print(best_config)
-
-##### load best_config from text
-# import ast
-# # Specify the path to the text file
-# with open(config_file, 'r') as cf:
-#     config_txt = cf.read()
-# config_dict = ast.literal_eval(config_txt)
-# # Print the dictionary
-# print(config_dict)
-
-# best_config=config_dict
-# print(best_config)
+    print("***********************   Ray tune finished   ***********************************")
+    print(best_config)
+    
 
 #### train and tune DANN; DANNwithTrainingTuning class takes all variables in the config dictionary from ray_tune
 print("***********************************   Start fittiing model with best configurations   ***********************************")
@@ -90,11 +102,15 @@ if(dim == "1D"):
 DANN_trainvalid.data_loader(data_dir=data_dir,
                      input_size=input_size,
                      feature_type=feature_type,
-                     R01BTuning=True)
+                     R01BTuning=R01BTune_flag)
 
 DANN_trainvalid.fit(output_path=output_path,
-             R01BTuning_fit=True)
+             R01BTuning_fit=R01BTune_flag)
 
+output, _ = DANN_trainvalid(DANN_trainvalid.X_test_tensor, alpha = 0.1)
+auc_traintune = roc_auc_score(DANN_trainvalid.y_test_tensor.detach().cpu(),output.detach().cpu())
+
+print(f"----------------   Test AUC {feature_type}: {auc_traintune}   ----------------")
 print("***********************************   Completed fitting model   ***********************************")
 
 #### cv process is independent
@@ -107,9 +123,9 @@ if(dim == "1D"):
 DANN_cv.data_loader(data_dir=data_dir,
                     input_size=input_size,
                     feature_type=feature_type,
-                    R01BTuning=True)
+                    R01BTuning=R01BTune_flag)
 
-DANN_cv.crossvalidation(output_path=output_path_cv,num_folds=5,R01BTuning_fit=True)
+DANN_cv.crossvalidation(output_path=output_path_cv,num_folds=5,R01BTuning_fit=R01BTune_flag)
 print("***********************************   Completed cross validations   ***********************************")
 
 

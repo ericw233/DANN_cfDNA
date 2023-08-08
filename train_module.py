@@ -83,37 +83,39 @@ def train_module(config, data_dir, input_size, feature_type, dim):
             batch_y = y_train_tensor[batch_start:batch_end]
             batch_d = d_train_tensor[batch_start:batch_end]
             
-            batch_X_source = batch_X[batch_d == 0]
-            batch_y_source = batch_y[batch_d == 0]
-            
             batch_X = batch_X.to(device)
             batch_y = batch_y.to(device)
             batch_d = batch_d.to(device)
 
-            batch_X_source = batch_X_source.to(device)
-            batch_y_source = batch_y_source.to(device)
+            # batch_X_source = batch_X[batch_d == 0]
+            # batch_y_source = batch_y[batch_d == 0]
             
-            ##### source domain
-            # Zero parameter gradients
-            optimizer_extractor.zero_grad()
-            optimizer_task.zero_grad()
-            optimizer_domain.zero_grad()
-                        
-            # Forward pass
-            outputs_task, _ = model(batch_X_source, alpha)
+            # batch_X_source = batch_X_source.to(device)
+            # batch_y_source = batch_y_source.to(device)
+                                             
+            ### Forward pass
+            # outputs_task, _ = model(batch_X_source, alpha)
+            outputs_task, _ = model(batch_X, alpha)
             _, outputs_domain = model(batch_X, alpha)
             
+         
             # calculate task and domain loss
+            # loss_task = criterion_task(outputs_task, batch_y_source)
             loss_task = criterion_task(outputs_task, batch_y)
             loss_domain = criterion_domain(outputs_domain, batch_d)
             loss = loss_task + config["lambda"] * loss_domain
             
+            ##### source domain
+            # Zero parameter gradients
             # Backward and optimize
+            optimizer_extractor.zero_grad()
+            optimizer_task.zero_grad()
+            optimizer_domain.zero_grad()
+            
             loss.backward()
             optimizer_extractor.step()
             optimizer_task.step()
-            optimizer_domain.step()
-            
+            optimizer_domain.step() 
             # Print the loss after every epoch
         # train_auc = roc_auc_score(
         #     batch_y.to('cpu').detach().numpy(), outputs_task.to('cpu').detach().numpy()
@@ -163,6 +165,6 @@ def train_module(config, data_dir, input_size, feature_type, dim):
     
     model.train()    
     model.load_state_dict(best_model)
-    # torch.save(model,f"/mnt/binf/eric/CNN_1D_RayTune/{feature_type}_CNN_1D_RayTune.pt")
+    # torch.save(model,f"/mnt/binf/eric/DANN_1D_RayTune/{feature_type}_DANN_1D_RayTune.pt")
     print("Training module complete")
     # return(model)

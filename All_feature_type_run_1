@@ -1,8 +1,8 @@
 #!/bin/bash
-feature_type_list=(Frag Arm Griffin Cnv MCMS)
-input_size=(1200 950 2600 2500 200)
-for i in {0..4}
+feature_type_list=(Frag Arm Cnv Griffin MCMS)
+input_size=(1200 950 2500 2600 200)
+for i in {0..2}
 do
-    python ./DANN_run.py ${feature_type_list[i]} 1D ${input_size[i]} 25 500 /mnt/binf/eric/DANN_JulyResults/DANN_1D_cluster_0721 /mnt/binf/eric/Mercury_June2023_new/Feature_all_June2023_R01BMatch_DomainKAG9_Cluster.csv
+    python ./DANN_run.py ${feature_type_list[i]} 1D ${input_size[i]} 100 500 /mnt/binf/eric/DANN_JulyResults/DANN_1D_MGIonly_updatemodelv2_0728 /mnt/binf/eric/Mercury_June2023_new/Feature_MGI_SeqDomain.csv
 done
 

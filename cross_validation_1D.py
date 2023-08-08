@@ -112,38 +112,45 @@ class DANNwithCV_1D(DANN_1D):
                     batch_X = X_train_fold[batch_start:batch_end]
                     batch_y = y_train_fold[batch_start:batch_end]
                     batch_d = d_train_fold[batch_start:batch_end]
-                    
-                    batch_X_source = batch_X[batch_d == 0]
-                    batch_y_source = batch_y[batch_d == 0]
-
+                                                                                
                     batch_X = batch_X.to(device)
                     batch_y = batch_y.to(device)
                     batch_d = batch_d.to(device)
+                    
+                    # batch_X_source = batch_X[batch_d == 0]
+                    # batch_y_source = batch_y[batch_d == 0]
 
-                    batch_X_source = batch_X_source.to(device)
-                    batch_y_source = batch_y_source.to(device)
-                                        
+                    # if batch_X_source.shape[0] <= 0:
+                    #     print("=======   not enough doamin 0 samples in batch_X   ========")
+                    #     continue
+
+                    # batch_X_source = batch_X_source.to(device)
+                    # batch_y_source = batch_y_source.to(device)
+                                       
+                    # outputs_task, _ = self(batch_X_source,alpha)
+                    outputs_task, _ = self(batch_X,alpha)
+                    _, outputs_domain = self(batch_X,alpha)
+                    
+                    # loss_task = self.criterion_task(outputs_task, batch_y_source)
+                    loss_task = self.criterion_task(outputs_task, batch_y)
+                    loss_domain = self.criterion_domain(outputs_domain, batch_d)
+                    
+                    loss = loss_task + self.loss_lambda * loss_domain
+                    
                     self.optimizer_extractor.zero_grad()
                     self.optimizer_task.zero_grad()
                     self.optimizer_domain.zero_grad()
                     
-                    outputs_task, _ = self(batch_X_source,alpha)
-                    _, outputs_domain = self(batch_X,alpha)
-                    
-                    loss_task = self.criterion_task(outputs_task, batch_y_source)
-                    loss_domain = self.criterion_domain(outputs_domain, batch_d)
-                    
-                    loss = loss_task + self.loss_lambda * loss_domain
                     loss.backward()
                     self.optimizer_extractor.step()
                     self.optimizer_task.step()
                     self.optimizer_domain.step()
                     
-                train_auc = roc_auc_score(
-                    batch_y.to('cpu').detach().numpy(), outputs_task.to('cpu').detach().numpy()
-                )
+                # train_auc = roc_auc_score(
+                #     batch_y_source.to('cpu').detach().numpy(), outputs_task.to('cpu').detach().numpy()
+                # )
                 print(f"Fold: {fold+1}/{num_folds}, Epoch: {epoch+1}/{self.num_epochs}, i: {batch_start//self.batch_size}")
-                print(f"Train AUC: {train_auc.item():.4f}, Train total oss: {loss.item():.4f}, Train task oss: {loss_task.item():.4f}")
+                print(f"Train total oss: {loss.item():.4f}, Train task oss: {loss_task.item():.4f}")
                 print("-------------------------")
         
                 with torch.no_grad():

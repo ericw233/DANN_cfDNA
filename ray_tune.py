@@ -7,17 +7,19 @@ from model import DANN_1D, DANN
 from train_module import train_module
 
 # ray tune
-from ray import tune
+from ray import air, tune
 from ray.tune.schedulers import ASHAScheduler
 from functools import partial
+import ray
 
 def ray_tune(num_samples=200, max_num_epochs=1000, gpus_per_trial=1, 
-         output_path="/mnt/binf/eric/DANN_Mercury_output/",
+         output_path="/mnt/binf/eric/DANN_JulyResults/test",
          data_dir="/mnt/binf/eric/Mercury_June2023_new/Feature_all_June2023_R01BMatch.csv",
-         input_size=55,
+         input_size=1200,
          feature_type="Frag",
          dim="1D"):
 
+    ray.init(address="local", _temp_dir="/tmp/ray_233/", num_cpus=24, num_gpus=1)
     config = {
         "out1": tune.choice([2**i for i in range(4,7)]),
         "out2": tune.choice([2**i for i in range(6,9)]),
@@ -65,11 +67,41 @@ def ray_tune(num_samples=200, max_num_epochs=1000, gpus_per_trial=1,
         scheduler=scheduler
     )
     
-    best_trial = result.get_best_trial(metric = "testloss", mode = "min", scope = "last")
+    best_trial = result.get_best_trial(metric = "testloss", mode = "min", scope = "all")
     print(f"Best trial config: {best_trial.config}")
     print(f"Best trial final validation loss: {best_trial.last_result['testloss']}")
     print(f"Best trial final validation auc: {best_trial.last_result['testauc']}")
-
+ 
+    ### use tune.Tuner insead of tune.run. The latter has been deprecated
+    # tuner = tune.Tuner(
+    #     partial(train_module,
+    #             data_dir=data_dir,
+    #             input_size=input_size,
+    #             feature_type=feature_type,
+    #             dim=dim),
+    #     # resources_per_worker={"CPU": 16, "GPU": 1},
+    #     param_space=config,
+    #     tune_config=tune.TuneConfig(
+    #         # metric="testloss",
+    #         # mode="min",
+    #         num_samples=num_samples,
+    #         scheduler=scheduler,
+    #     ),
+    #     run_config=air.RunConfig(
+    #         # name=f"{feature_type}_tune",
+    #         # stop={"training_iteration": 500},
+    #         checkpoint_config=air.CheckpointConfig(
+    #             # checkpoint_score_attribute="min-testloss",
+    #             num_to_keep=10,
+    #         ),
+    #     ),
+    # )
+    # result = tuner.fit()    
+    # best_trial = result.get_best_result("testloss", "min", "last")
+    # print(f"Best trial config: {best_trial.config}")
+    # print(f"Best trial final validation loss: {best_trial.metrics['testloss']}")
+    # print(f"Best trial final validation auc: {best_trial.metrics['testauc']}")
+    
     if(dim == "1D"):
         best_trained_model = DANN_1D(input_size=input_size, num_class=2, num_domain=2,
                                 out1=best_trial.config["out1"], out2=best_trial.config["out2"], 

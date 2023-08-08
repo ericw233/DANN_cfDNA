@@ -102,31 +102,33 @@ class DANNwithTrainingTuning_1D(DANN_1D):
                 batch_y = self.y_train_tensor[batch_start:batch_end]
                 batch_d = self.d_train_tensor[batch_start:batch_end]
 
-                batch_X_source = batch_X[batch_d == 0]   # 0 being the large cluster
-                batch_y_source = batch_y[batch_d == 0]
-                
                 batch_X = batch_X.to(device)
                 batch_y = batch_y.to(device)
                 batch_d = batch_d.to(device)
                 
-                batch_X_source = batch_X_source.to(device)
-                batch_y_source = batch_y_source.to(device)
+                # batch_X_source = batch_X[batch_d == 0]   # 0 being the large cluster
+                # batch_y_source = batch_y[batch_d == 0]
+                
+                # batch_X_source = batch_X_source.to(device)
+                # batch_y_source = batch_y_source.to(device)
+                
+                ### Forward pass
+                # outputs_task, _ = self(batch_X_source, alpha)
+                outputs_task, _ = self(batch_X, alpha)
+                _, outputs_domain = self(batch_X, alpha)
+                
+                # calculate task and domain loss
+                # loss_task = self.criterion_task(outputs_task, batch_y_source)
+                loss_task = self.criterion_task(outputs_task, batch_y)
+                loss_domain = self.criterion_domain(outputs_domain, batch_d)
+                loss = loss_task + self.loss_lambda * loss_domain
                 
                 ##### source domain
                 # Zero parameter gradients
                 self.optimizer_extractor.zero_grad()
                 self.optimizer_task.zero_grad()
                 self.optimizer_domain.zero_grad()
-                            
-                # Forward pass
-                outputs_task, _ = self(batch_X_source, alpha)
-                _, outputs_domain = self(batch_X, alpha)
-                
-                # calculate task and domain loss
-                loss_task = self.criterion_task(outputs_task, batch_y_source)
-                loss_domain = self.criterion_domain(outputs_domain, batch_d)
-                loss = loss_task + self.loss_lambda * loss_domain
-                
+                             
                 # Backward and optimize
                 loss.backward()
                 self.optimizer_extractor.step()

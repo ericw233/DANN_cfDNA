@@ -1,8 +1,0 @@
-#!/bin/bash
-feature_type_list=(Frag)
-input_size=(1200)
-for i in {0..0}
-do
-    python ./DANN_run.py ${feature_type_list[i]} 1D ${input_size[i]} 25 1000 /mnt/binf/eric/DANN_JulyResults/DANN_1D_0712v2 /mnt/binf/eric/Mercury_June2023_new/Feature_all_June2023_R01BMatch_Domain.csv
-done
-
