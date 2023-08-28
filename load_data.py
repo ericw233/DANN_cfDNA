@@ -101,7 +101,7 @@ def load_data_1D(data_dir="/mnt/binf/eric/Mercury_June2023_new/Feature_all_June2
 
     return data, X_train_tensor, y_train_tensor, d_train_tensor, X_test_tensor, y_test_tensor, d_test_tensor, X_all_tensor, y_all_tensor, d_all_tensor, train_sampleid
 
-def load_data_1D_impute(data_dir="/mnt/binf/eric/Mercury_June2023_new/Feature_all_June2023_R01BMatch_DomainKAG9_Cluster.csv", input_size=900, feature_type = "Arm"):
+def load_data_1D_impute(data_dir="/mnt/binf/eric/Mercury_Aug2023_new/Feature_all_Aug2023_DomainKAG9v1.csv", input_size=900, feature_type = "Arm"):
     # Read data from CSV file
     data = pd.read_csv(data_dir)
 
@@ -125,8 +125,8 @@ def load_data_1D_impute(data_dir="/mnt/binf/eric/Mercury_June2023_new/Feature_al
     #### drop constant NA columns based on X_train
     na_columns = X_train.columns[X_train.isna().all()]
     X_train_drop = X_train.drop(columns = na_columns)
-    X_test_drop = X_test.drop(column = na_columns)
-    X_all_drop = X_all.drop(column = na_columns)
+    X_test_drop = X_test.drop(columns = na_columns)
+    X_all_drop = X_all.drop(columns = na_columns)
     
     #### impute variables based on X_train_drop
     mean_imputer = SimpleImputer(strategy = 'mean')
