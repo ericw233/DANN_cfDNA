@@ -7,7 +7,7 @@ from copy import deepcopy
 from ray.air import Checkpoint, session
 
 from model import DANN_1D, DANN
-from load_data import load_data_1D_impute, load_data
+from load_data import load_data_1D_impute
 
 def train_module(config, data_dir, input_size, feature_type, dim):
     # Set the device
@@ -15,22 +15,24 @@ def train_module(config, data_dir, input_size, feature_type, dim):
     
     # Load data using load_data()
     if(dim == "1D"):
-        _, X_train_tensor, y_train_tensor, d_train_tensor, X_test_tensor, y_test_tensor, d_test_tensor, X_all_tensor, _, _, _ = load_data_1D_impute(data_dir, input_size, feature_type) 
+        _, X_train_tensor, y_train_tensor, d_train_tensor, X_test_tensor, y_test_tensor, d_test_tensor, X_all_tensor, _, _, X_r01b_tensor, y_r01b_tensor, _ = load_data_1D_impute(data_dir, input_size, feature_type) 
         model = DANN_1D(input_size=input_size, num_class=2, num_domain=2,
                     out1=config["out1"], out2=config["out2"], 
                     conv1=config["conv1"], pool1=config["pool1"], drop1=config["drop1"], 
                     conv2=config["conv2"], pool2=config["pool2"], drop2=config["drop2"], 
                     fc1=config["fc1"], fc2=config["fc2"], drop3=config["drop3"])
-    else:
-        _, X_train_tensor, y_train_tensor, d_train_tensor, X_test_tensor, y_test_tensor, d_test_tensor, X_all_tensor, _, _, _ = load_data(data_dir, input_size, feature_type)    
-        model = DANN(input_size=input_size, num_class=2, num_domain=2,
-                    out1=config["out1"], out2=config["out2"], 
-                    conv1=config["conv1"], pool1=config["pool1"], drop1=config["drop1"], 
-                    conv2=config["conv2"], pool2=config["pool2"], drop2=config["drop2"], 
-                    fc1=config["fc1"], fc2=config["fc2"], drop3=config["drop3"])
+    # else:
+    #     _, X_train_tensor, y_train_tensor, d_train_tensor, X_test_tensor, y_test_tensor, d_test_tensor, X_all_tensor, _, _, _ = load_data(data_dir, input_size, feature_type)    
+    #     model = DANN(input_size=input_size, num_class=2, num_domain=2,
+    #                 out1=config["out1"], out2=config["out2"], 
+    #                 conv1=config["conv1"], pool1=config["pool1"], drop1=config["drop1"], 
+    #                 conv2=config["conv2"], pool2=config["pool2"], drop2=config["drop2"], 
+    #                 fc1=config["fc1"], fc2=config["fc2"], drop3=config["drop3"])
 
     model.to(device)
-
+    X_r01b_tensor = X_r01b_tensor.to(device)
+    y_r01b_tensor = y_r01b_tensor.to(device)
+    
     # Define the loss function and optimizer
     criterion_task = nn.BCELoss()
     criterion_domain = nn.BCELoss()
@@ -38,6 +40,7 @@ def train_module(config, data_dir, input_size, feature_type, dim):
     optimizer_extractor = torch.optim.Adam(model.feature_extractor.parameters(), lr=1e-4, weight_decay=1e-5)
     optimizer_task = torch.optim.Adam(model.task_classifier.parameters(), lr=1e-4, weight_decay=1e-5)
     optimizer_domain = torch.optim.Adam(model.domain_classifier.parameters(), lr=1e-4, weight_decay=1e-5)
+    optimizer_r01b = torch.optim.Adam(model.r01b_classifier.parameters(), lr=1e-5, weight_decay=1e-6)
 
     # Get checkpoint
     checkpoint = session.get_checkpoint()
@@ -49,6 +52,7 @@ def train_module(config, data_dir, input_size, feature_type, dim):
         optimizer_extractor.load_state_dict(checkpoint_state["optimizer_extractor_state_dict"])
         optimizer_task.load_state_dict(checkpoint_state["optimizer_task_state_dict"])
         optimizer_domain.load_state_dict(checkpoint_state["optimizer_domain_state_dict"])
+        optimizer_r01b.load_state_dict(checkpoint_state["optimizer_r01b_state_dict"])
     else:
         start_epoch = 0
 
@@ -95,15 +99,16 @@ def train_module(config, data_dir, input_size, feature_type, dim):
                                              
             ### Forward pass
             # outputs_task, _ = model(batch_X_source, alpha)
-            outputs_task, _ = model(batch_X, alpha)
-            _, outputs_domain = model(batch_X, alpha)
-            
+            outputs_task, outputs_domain, outputs_r01b = model(batch_X, X_r01b_tensor, alpha)
+      
          
             # calculate task and domain loss
             # loss_task = criterion_task(outputs_task, batch_y_source)
             loss_task = criterion_task(outputs_task, batch_y)
             loss_domain = criterion_domain(outputs_domain, batch_d)
-            loss = loss_task + config["lambda"] * loss_domain
+            loss_r01b = criterion_task(outputs_r01b, y_r01b_tensor)
+            
+            loss = loss_task + config["lambda"] * loss_domain + 0.1 * loss_r01b
             
             ##### source domain
             # Zero parameter gradients
@@ -111,11 +116,14 @@ def train_module(config, data_dir, input_size, feature_type, dim):
             optimizer_extractor.zero_grad()
             optimizer_task.zero_grad()
             optimizer_domain.zero_grad()
+            optimizer_r01b.zero_grad()
             
             loss.backward()
             optimizer_extractor.step()
             optimizer_task.step()
             optimizer_domain.step() 
+            optimizer_r01b.step()
+            
             # Print the loss after every epoch
         # train_auc = roc_auc_score(
         #     batch_y.to('cpu').detach().numpy(), outputs_task.to('cpu').detach().numpy()
@@ -130,7 +138,7 @@ def train_module(config, data_dir, input_size, feature_type, dim):
             model.eval()
             X_test_tensor = X_test_tensor.to(device)
             y_test_tensor = y_test_tensor.to(device)
-            test_outputs,_ = model(X_test_tensor,alpha=0.1)
+            test_outputs,_,_ = model(X_test_tensor, X_r01b_tensor, alpha=0.1)
             test_outputs = test_outputs.to("cpu")
 
             test_loss = criterion_task(test_outputs, y_test_tensor.to("cpu"))
@@ -155,6 +163,7 @@ def train_module(config, data_dir, input_size, feature_type, dim):
             "optimizer_extractor_state_dict": optimizer_extractor.state_dict(),
             "optimizer_task_state_dict": optimizer_task.state_dict(),
             "optimizer_domain_state_dict": optimizer_domain.state_dict(),
+            "optimizer_r01b_state_dict": optimizer_r01b.state_dict()
         }
         checkpoint = Checkpoint.from_dict(checkpoint_data)
         
