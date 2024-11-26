@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from reverse_layer import ReverseLayerF
+from model.reverse_layer import ReverseLayerF
 
 
 class DANN_1D(nn.Module):

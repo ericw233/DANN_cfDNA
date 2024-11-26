@@ -15,8 +15,8 @@ from ray.tune.schedulers import ASHAScheduler
 from functools import partial
 
 ### self defined functions
-from model_3layer import DANN_1D
-from ray_tune import ray_tune
+from model.model_3layer import DANN_1D
+from raytune.ray_tune import ray_tune
 from train_and_tune_1D import DANNwithTrainingTuning_1D
 from cross_validation_1D import DANNwithCV_1D
 
