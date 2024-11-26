@@ -43,7 +43,7 @@ class DANN_1D(nn.Module):
             nn.Linear(fc2, 1),
             nn.Sigmoid()
         )
-        
+     
         
     def _get_fc_input_size(self, input_size):
         dummy_input = torch.randn(1, 1, input_size)
