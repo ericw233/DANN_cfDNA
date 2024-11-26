@@ -43,6 +43,19 @@ class DANN_1D(nn.Module):
             nn.Linear(fc2, 1),
             nn.Sigmoid()
         )
+<<<<<<< HEAD
+=======
+        
+        # Domain classifier
+        self.r01b_classifier = nn.Sequential(
+            nn.Linear(self.fc_input_size, fc1),
+            nn.ReLU(),
+            nn.Dropout(drop3),
+            nn.Linear(fc1, fc2),
+            nn.Linear(fc2, 1),
+            nn.Sigmoid()
+        )
+>>>>>>> ad2ea7e178df5a206c1ec4a305ea7bb6f6858d19
      
         
     def _get_fc_input_size(self, input_size):
@@ -56,7 +69,7 @@ class DANN_1D(nn.Module):
         nn.init.xavier_uniform_(layer.weight)
         nn.init.constant_(layer.bias, bias)
                 
-    def forward(self, x, alpha):
+    def forward(self, x, y, alpha):
         features = self.feature_extractor(x)
         features = features.view(features.size(0), -1)
         
@@ -67,7 +80,14 @@ class DANN_1D(nn.Module):
         reverse_features = ReverseLayerF.apply(features, alpha)
         domain_output = self.domain_classifier(reverse_features)
         
-        return task_output.squeeze(1), domain_output.squeeze(1)
+        if y is not None:
+            feature_r01b = self.feature_extractor(y)
+            feature_r01b = feature_r01b.view(feature_r01b.size(0), -1)
+            r01b_output = self.r01b_classifier(feature_r01b)
+            
+            return task_output.squeeze(1), domain_output.squeeze(1), r01b_output.squeeze(1)
+        else:
+            return task_output.squeeze(1), domain_output.squeeze(1), None
     
     
 

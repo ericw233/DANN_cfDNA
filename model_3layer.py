@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from reverse_layer import ReverseLayerF
 
-### model v1
+
 class DANN_1D(nn.Module):
     def __init__(self, input_size, num_class, num_domain, out1, out2, conv1, pool1, drop1, conv2, pool2, drop2, fc1, fc2, drop3):
         super(DANN_1D, self).__init__()
@@ -21,9 +21,9 @@ class DANN_1D(nn.Module):
             nn.Dropout(drop2),
             nn.MaxPool1d(kernel_size=pool2, stride=2),
             
-            nn.Conv1d(in_channels=out2, out_channels=out3, kernel_size=conv2, stride=2, bias=None),
+            nn.Conv1d(in_channels=out2, out_channels=out2*4, kernel_size=conv2, stride=2, bias=None),
             nn.ReLU(),
-            nn.BatchNorm1d(out2),
+            nn.BatchNorm1d(out2*4),
             nn.Dropout(drop2),
             nn.MaxPool1d(kernel_size=pool2, stride=2)
         )
@@ -50,6 +50,16 @@ class DANN_1D(nn.Module):
             nn.Sigmoid()
         )
         
+        # Domain classifier
+        self.r01b_classifier = nn.Sequential(
+            nn.Linear(self.fc_input_size, fc1),
+            nn.ReLU(),
+            nn.Dropout(drop3),
+            nn.Linear(fc1, fc2),
+            nn.Linear(fc2, 1),
+            nn.Sigmoid()
+        )
+     
         
     def _get_fc_input_size(self, input_size):
         dummy_input = torch.randn(1, 1, input_size)
@@ -62,7 +72,7 @@ class DANN_1D(nn.Module):
         nn.init.xavier_uniform_(layer.weight)
         nn.init.constant_(layer.bias, bias)
                 
-    def forward(self, x, alpha):
+    def forward(self, x, y, alpha):
         features = self.feature_extractor(x)
         features = features.view(features.size(0), -1)
         
@@ -73,7 +83,14 @@ class DANN_1D(nn.Module):
         reverse_features = ReverseLayerF.apply(features, alpha)
         domain_output = self.domain_classifier(reverse_features)
         
-        return task_output.squeeze(1), domain_output.squeeze(1)
+        if y is not None:
+            feature_r01b = self.feature_extractor(y)
+            feature_r01b = feature_r01b.view(feature_r01b.size(0), -1)
+            r01b_output = self.r01b_classifier(feature_r01b)
+            
+            return task_output.squeeze(1), domain_output.squeeze(1), r01b_output.squeeze(1)
+        else:
+            return task_output.squeeze(1), domain_output.squeeze(1), None
     
     
 

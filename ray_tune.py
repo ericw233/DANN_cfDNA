@@ -19,7 +19,7 @@ def ray_tune(num_samples=200, max_num_epochs=1000, gpus_per_trial=1,
          feature_type="Frag",
          dim="1D"):
 
-    ray.init(address="local", _temp_dir="/tmp/ray_233/", num_cpus=24, num_gpus=1)
+    ray.init(address="local", _temp_dir="/tmp/ray_233/", num_cpus=2, num_gpus=1)
     config = {
         "out1": tune.choice([2**i for i in range(4,7)]),
         "out2": tune.choice([2**i for i in range(6,9)]),
