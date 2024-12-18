@@ -1,9 +1,8 @@
 import torch
-import torch.nn as nn
 import os
 import sys
 
-from model import DANN_1D, DANN
+from ..model.model import DANN_1D, DANN
 from train_module import train_module
 
 # ray tune
