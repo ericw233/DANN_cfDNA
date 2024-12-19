@@ -10,10 +10,10 @@ import os
 import inspect
 import matplotlib.pyplot as plt
 
-from model.model_3layer import DANN_1D
-from data.load_data import load_data_1D_impute
-from data.AE_transform_feature import AE_transform
-from utils.find_threshold import find_threshold, find_sensitivity
+from ..model.model_3layer import DANN_1D
+from ..data.load_data import load_data_1D_impute
+from ..utils.AE_clustering import AE_clustering
+from ..utils.find_threshold import find_threshold, find_sensitivity
 
 class DANNwithTrainingTuning_1D(DANN_1D):
     def __init__(self, config, input_size, num_class, num_domain, gamma_r01b):
@@ -106,7 +106,7 @@ class DANNwithTrainingTuning_1D(DANN_1D):
         # sampleid_train_healthy = sampleid_train.loc[sampleid_train['Train_Group'] == 0,"SampleID"]
         
         # this data frame contains SampleID, Cluster, and X_train_cancer contents
-        self.sampleid_cluster_df = AE_transform(X_train_cancer, sampleid_train_cancer, methods = "kmeans", encoding_size = encoding_size, n_cluster = n_cluster)
+        self.sampleid_cluster_df = AE_clustering(X_train_cancer, sampleid_train_cancer, methods = "kmeans", encoding_size = encoding_size, n_cluster = n_cluster)
         print(f"The size of each cluster is {pd.crosstab(self.sampleid_cluster_df['Cluster'], 1)}")
     
     def select_cancerdata(self,selected_cluster = 0):

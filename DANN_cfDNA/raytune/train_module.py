@@ -4,10 +4,10 @@ import numpy as np
 
 from sklearn.metrics import roc_auc_score
 from copy import deepcopy
-from ray.air import Checkpoint, session
+from ray.air import session
 
-from model import DANN_1D, DANN
-from load_data import load_data_1D_impute
+from ..model.model_3layer import DANN_1D, DANN
+from ..data.load_data import load_data_1D_impute
 
 def train_module(config, data_dir, input_size, feature_type, dim):
     # Set the device

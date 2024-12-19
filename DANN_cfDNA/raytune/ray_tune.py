@@ -2,14 +2,14 @@ import torch
 import os
 import sys
 
-from ..model.model import DANN_1D, DANN
-from train_module import train_module
-
 # ray tune
 from ray import air, tune
 from ray.tune.schedulers import ASHAScheduler
 from functools import partial
 import ray
+
+from ..model.model_3layer import DANN_1D, DANN
+from .train_module import train_module
 
 def ray_tune(num_samples=200, max_num_epochs=1000, gpus_per_trial=1, 
          output_path="/mnt/binf/eric/DANN_JulyResults/test",

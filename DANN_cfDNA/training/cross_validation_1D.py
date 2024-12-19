@@ -10,8 +10,8 @@ from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import KFold
 from copy import deepcopy
 
-from model.model import DANN_1D
-from data.load_data import load_data_1D_impute   
+from ..model.model_3layer import DANN_1D
+from ..data.load_data import load_data_1D_impute   
     
 class DANNwithCV_1D(DANN_1D):
     def __init__(self, config, input_size, num_class, num_domain, gamma_r01b):

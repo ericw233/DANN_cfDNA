@@ -8,17 +8,17 @@ import os
 import numpy as np
 
 # ray tune package-related functions
-import ray
-from ray import tune
-from ray.air import Checkpoint, session
-from ray.tune.schedulers import ASHAScheduler
+# import ray
+# from ray import tune
+# from ray.air import Checkpoint, session
+# from ray.tune.schedulers import ASHAScheduler
 from functools import partial
 
 ### self defined functions
-from model.model_3layer import DANN_1D
-from raytune.ray_tune import ray_tune
-from train_and_tune_1D import DANNwithTrainingTuning_1D
-from cross_validation_1D import DANNwithCV_1D
+from DANN_cfDNA.model.model_3layer import DANN_1D
+from DANN_cfDNA.raytune.ray_tune import ray_tune
+from DANN_cfDNA.training.train_and_tune_1D import DANNwithTrainingTuning_1D
+from DANN_cfDNA.training.cross_validation_1D import DANNwithCV_1D
 
 # default value of input_size and feature_type
 feature_type_list = ["Frag","Arm","Cnv","Griffin","MCMS","Focal"]
