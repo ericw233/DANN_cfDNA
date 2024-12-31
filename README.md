@@ -29,7 +29,7 @@ A Python implementation of Domain-Adversarial Neural Network (DANN) for correcti
 - Conda installed
 
 ### Steps
-1. Clone the repository:
+1. Clone the repository
    ```bash
    git clone https://github.com/ericw233/DANN_cfDNA.git
    cd DANN_cfDNA
