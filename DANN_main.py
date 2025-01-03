@@ -1,36 +1,28 @@
-#!/mnt/binf/eric/anaconda3/envs/Py38/bin/python
 import torch
-import torch.nn as nn
-from sklearn.metrics import roc_auc_score
-from copy import deepcopy
 import sys
 import os
-import numpy as np
 
 # ray tune package-related functions
 # import ray
 # from ray import tune
 # from ray.air import Checkpoint, session
 # from ray.tune.schedulers import ASHAScheduler
-from functools import partial
 
 ### self defined functions
-from DANN_cfDNA.model.model_3layer import DANN_1D
 from DANN_cfDNA.raytune.ray_tune import ray_tune
 from DANN_cfDNA.training.train_and_tune_1D import DANNwithTrainingTuning_1D
-from DANN_cfDNA.training.cross_validation_1D import DANNwithCV_1D
 
 # default value of input_size and feature_type
 feature_type_list = ["Frag","Arm","Cnv","Griffin","MCMS","Focal"]
-input_size_list = [1100,950,2500,2600,200,300]
+input_size_list = [1100,950,2600,2600,200,300]
 
 dim = "1D"
 tuning_num = 50
 epoch_num = 500
-feature_type = "AE"
-input_size = 550
-output_path="/mnt/binf/eric/DANN_Jan2024Results_new/DANN_0223_AE_control"
-data_dir="/mnt/binf/eric/Mercury_Dec2023/Feature_all_Dec2023_withAE.pkl"
+feature_type = "Cnv"
+input_size = 2600
+output_path="./Output_example/"
+data_dir="./Feature_example/feature_example.pkl"
 R01BTune="No"
 cluster_method="kmeans"
 nfold=5
@@ -68,6 +60,8 @@ else:
 num_class = 2
 num_domain = 2
 gamma_r01b = 1000.0
+output_path = os.path.abspath(output_path)
+data_dir = os.path.abspath(data_dir)
 output_path_cv = f"{output_path}_cv"
 config_file = f"{output_path}/{feature_type}_config.txt"
 
@@ -140,10 +134,6 @@ else:
         DANN_trainvalid.weight_reset()  
         DANN_trainvalid.fit(output_path=output_path,R01BTuning_fit=R01BTune_flag)
         DANN_trainvalid.crossvalidation(num_folds=nfold,output_path=output_path)
-        ### test
-        # DANN_trainvalid.X_train_tensor = DANN_trainvalid.X_all_tensor
-        # DANN_trainvalid.y_train_tensor = DANN_trainvalid.y_all_tensor
-        # DANN_trainvalid.d_train_tensor = DANN_trainvalid.d_all_tensor
         
         # Clear cache
         torch.cuda.empty_cache()
@@ -161,21 +151,3 @@ else:
         # print("====================================================")  
         # print(f"----------------   Testing AUC {feature_type}: {auc_traintune}   ----------------")
         print("***********************************   Completed fitting model   ***********************************")
-
-
-#### cv process is independent
-# print("***********************************   Start cross validations   ***********************************")
-# if(dim == "1D"):
-#     DANN_cv=DANNwithCV_1D(best_config,input_size=input_size,num_class=num_class,num_domain=num_domain,gamma_r01b=gamma_r01b)
-# # else:
-# #     DANN_cv=DANNwithCV(best_config, input_size=input_size,num_class=num_class)
-    
-# DANN_cv.data_loader(data_dir=data_dir,
-#                     input_size=input_size,
-#                     feature_type=feature_type,
-#                     R01BTuning=R01BTune_flag)
-
-# DANN_cv.crossvalidation(output_path=output_path_cv,num_folds=5,R01BTuning_fit=R01BTune_flag)
-# print("***********************************   Completed cross validations   ***********************************")
-
-

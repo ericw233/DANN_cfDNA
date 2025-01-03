@@ -157,15 +157,15 @@ def train_module(config, data_dir, input_size, feature_type, dim):
                     print(f"Early stopping triggered! No improvement in {patience} epochs.")
                     break
         
-        checkpoint_data = {
-            "epoch": epoch,
-            "model_state_dict": model.state_dict(),
-            "optimizer_extractor_state_dict": optimizer_extractor.state_dict(),
-            "optimizer_task_state_dict": optimizer_task.state_dict(),
-            "optimizer_domain_state_dict": optimizer_domain.state_dict(),
-            "optimizer_r01b_state_dict": optimizer_r01b.state_dict()
-        }
-        checkpoint = Checkpoint.from_dict(checkpoint_data)
+        # checkpoint_data = {
+        #     "epoch": epoch,
+        #     "model_state_dict": model.state_dict(),
+        #     "optimizer_extractor_state_dict": optimizer_extractor.state_dict(),
+        #     "optimizer_task_state_dict": optimizer_task.state_dict(),
+        #     "optimizer_domain_state_dict": optimizer_domain.state_dict(),
+        #     "optimizer_r01b_state_dict": optimizer_r01b.state_dict()
+        # }
+        # checkpoint = Checkpoint.from_dict(checkpoint_data)
         
         session.report(
             {"testloss": float(test_loss.item()), "testauc": test_auc},

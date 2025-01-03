@@ -60,7 +60,7 @@ def ray_tune(num_samples=200, max_num_epochs=1000, gpus_per_trial=1,
                 input_size=input_size,
                 feature_type=feature_type,
                 dim=dim),
-        resources_per_trial={"cpu": 16, "gpu": gpus_per_trial},
+        resources_per_trial={"cpu": 1, "gpu": gpus_per_trial},
         config=config,
         num_samples=num_samples,
         scheduler=scheduler

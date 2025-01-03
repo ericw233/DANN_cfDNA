@@ -213,8 +213,7 @@ class DANNwithTrainingTuning_1D(DANN_1D):
                 healthy_num = min(70, batch_X_healthy.size(0))
                 batch_X_healthy = batch_X_healthy[0:healthy_num]
                 batch_y_healthy = batch_y_healthy[0:healthy_num]
-                
-              
+                              
                 X_r01b_bind_tensor = torch.cat((X_r01b_cancer_tensor_shuffled, batch_X_healthy), dim=0)
                 y_r01b_bind_tensor = torch.cat((y_r01b_cancer_tensor_shuffled, batch_y_healthy), dim=0)
                 
@@ -236,9 +235,11 @@ class DANNwithTrainingTuning_1D(DANN_1D):
                 # outputs_task, _ = self(batch_X, alpha)
                 outputs_task, outputs_domain, outputs_r01b = self(batch_X, X_r01b_bind_tensor, alpha)
                 
-                outputs_r01b_cancer = outputs_r01b[0:healthy_num]
-                outputs_r01b_healthy = outputs_r01b[70:(70+healthy_num)]
-                ones_tensor = torch.ones(healthy_num).to(device)
+                r01b_num = X_r01b_cancer_tensor.size(0)
+                ranking_num = min(healthy_num, r01b_num)
+                outputs_r01b_cancer = outputs_r01b[0:ranking_num]
+                outputs_r01b_healthy = outputs_r01b[r01b_num:(r01b_num+ranking_num)]
+                ones_tensor = torch.ones(ranking_num).to(device)
                 
                 # calculate task and domain loss
                 # loss_task = self.criterion_task(outputs_task, batch_y_source)
@@ -519,9 +520,11 @@ class DANNwithTrainingTuning_1D(DANN_1D):
                     # outputs_task, _ = self(batch_X_source,alpha)
                     outputs_task, outputs_domain, outputs_r01b = self(batch_X, X_r01b_bind_tensor, alpha)
                     
-                    outputs_r01b_cancer = outputs_r01b[0:healthy_num]
-                    outputs_r01b_healthy = outputs_r01b[70:(70+healthy_num)]
-                    ones_tensor = torch.ones(healthy_num).to(device)
+                    r01b_num = X_r01b_cancer_tensor.size(0)
+                    ranking_num = min(healthy_num, r01b_num)
+                    outputs_r01b_cancer = outputs_r01b[0:ranking_num]
+                    outputs_r01b_healthy = outputs_r01b[r01b_num:(r01b_num+ranking_num)]
+                    ones_tensor = torch.ones(ranking_num).to(device)
                     
                     # subset domain outputs to only lung cancer samples
                     outputs_domain_lung = outputs_domain[batch_y == 1]

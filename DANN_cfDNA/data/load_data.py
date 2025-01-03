@@ -16,24 +16,24 @@ def load_data_1D_impute(data_dir="/mnt/binf/eric/Mercury_Dec2023/Feature_all_Dec
         data = pd.read_pickle(data_dir)
 
     # keep a full dataset without shuffling
-    mapping = {'Healthy':0,'Cancer':1}
+    # mapping = {'Healthy':0,'Cancer':1}
     
     # Split the data into train and test sets
     # X_train, X_test, y_train, y_test = train_test_split(features, target, test_size=0.2, random_state=42)
     X_train = data.loc[data["train"] == "training"].filter(regex = feature_type, axis=1)
-    y_train = data.loc[data["train"] == "training","Train_Group"].replace(mapping)
+    y_train = (data.loc[data["train"] == "training","Train_Group"] == "Cancer").astype(int)
     d_train = data.loc[data["train"] == "training","Domain"]
     
     X_test = data.loc[data["train"] == "validation"].filter(regex = feature_type, axis=1)
-    y_test = data.loc[data["train"] == "validation","Train_Group"].replace(mapping)
+    y_test = (data.loc[data["train"] == "validation","Train_Group"] == "Cancer").astype(int)
     d_test = data.loc[data["train"] == "validation","Domain"]
     
     X_all = data.filter(regex = feature_type, axis=1)
-    y_all = data.loc[:,'Train_Group'].replace(mapping)
+    y_all = (data.loc[:,'Train_Group'] == "Cancer").astype(int)
     d_all = data.loc[:,'Domain']
     
     X_r01b = data.loc[data["R01B_label"] == "R01B_match"].filter(regex = feature_type, axis=1)
-    y_r01b = data.loc[data["R01B_label"] == "R01B_match","Train_Group"].replace(mapping)
+    y_r01b = (data.loc[data["R01B_label"] == "R01B_match","Train_Group"] == "Cancer").astype(int)
 
     #### drop constant NA columns based on X_train
     na_columns = X_train.columns[X_train.isna().all()]
