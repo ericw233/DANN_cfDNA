@@ -43,8 +43,6 @@ class DANN_1D(nn.Module):
             nn.Linear(fc2, 1),
             nn.Sigmoid()
         )
-<<<<<<< HEAD
-=======
         
         # Domain classifier
         self.r01b_classifier = nn.Sequential(
@@ -55,7 +53,6 @@ class DANN_1D(nn.Module):
             nn.Linear(fc2, 1),
             nn.Sigmoid()
         )
->>>>>>> ad2ea7e178df5a206c1ec4a305ea7bb6f6858d19
      
         
     def _get_fc_input_size(self, input_size):
