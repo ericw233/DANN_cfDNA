@@ -19,7 +19,7 @@ A Python implementation of Domain-Adversarial Neural Network (DANN) for correcti
 - (Optional) Identifies the best hyperparameter set by RayTune.
 - Fits the DANN model with default hyperparameters or the best hyperparameter set using the training frame and validate it using the validation frame.
 - Conducts k-fold cross validations on the training frame.
-- Outputs results in .csv format.
+- Exports results in .csv format.
 
 ---
 
