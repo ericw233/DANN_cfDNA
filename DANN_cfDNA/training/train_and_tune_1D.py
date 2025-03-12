@@ -53,7 +53,7 @@ class DANNwithTrainingTuning_1D(DANN_1D):
         
         self.selected_cluster=0 # set default value of selected cluster
                     
-        data, X_train_tensor, y_train_tensor, d_train_tensor, X_test_tensor, y_test_tensor, _, X_all_tensor, y_all_tensor, d_all_tensor, X_r01b_tensor, y_r01b_tensor, train_sampleid = load_data_1D_impute(data_dir, input_size, feature_type) 
+        data, X_train_tensor, y_train_tensor, d_train_tensor, X_test_tensor, y_test_tensor, _, X_all_tensor, y_all_tensor, d_all_tensor, X_r01b_tensor, y_r01b_tensor, train_sampleid, _ = load_data_1D_impute(data_dir, input_size, feature_type) 
         self.data_idonly=data[["SampleID","Train_Group","train","Project","Domain","R01B_label"]]
         self.data_idonly['Train_Group'] = self.data_idonly['Train_Group'].replace({'Healthy':0,'Cancer':1})
         
