@@ -19,13 +19,14 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: 3.8
+        python-version: 3.10
 
     - name: Install dependencies
       run: |
-        conda env create -n DANN_cfDNA_env -c conda-forge -f DANN_cfDNA_env.yml
+        conda env create -f DANN_cfDNA_env.yml
 
     - name: Run tests for DANN-cfDNA modeling fitting
+      shell: bash -l {0}
       run: |
         conda run -n DANN_cfDNA_env pip install pytest pytest-cov
         conda run -n DANN_cfDNA_env pytest --junitxml=test_results.xml --cov=DANN_cfDNA --cov-report=xml tests/
