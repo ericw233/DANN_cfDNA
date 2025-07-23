@@ -54,6 +54,7 @@ def test_dann_with_feature_example_data(tmp_path):
     model_file_found = any(f.name.endswith('.pt') for f in tmp_path_raw.iterdir())
     scores_file_found = any(f.name.endswith('.csv') for f in tmp_path_raw.iterdir())
 
+    assert tmp_path_raw.exists(), f"Expected folder {tmp_path_raw} not found"
     assert model_file_found, "Model state file (.pt) not found in output path."
     assert scores_file_found, "Scores file (.csv) not found in output path."
 
