@@ -17,7 +17,7 @@ feature_type_list = ["Frag","Arm","Cnv","Griffin","MCMS","Focal"]
 input_size_list = [1100,950,2600,2600,200,300]
 
 dim = "1D"
-tuning_num = 50
+tuning_num = 2
 epoch_num = 500
 feature_type = "Cnv"
 input_size = 2600
