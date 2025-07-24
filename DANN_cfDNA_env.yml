@@ -74,9 +74,6 @@ dependencies:
   - connection_pool=0.0.3=pyhd3deb0d_0
   - contourpy=1.2.0=py310hdb19cb5_0
   - cryptography=44.0.0=py310h6c63255_0
-  - cuda-version=11.8=h70ddcb2_3
-  - cudatoolkit=11.8.0=h4ba93d1_13
-  - cudnn=8.8.0.121=hcdd5f01_4
   - curl=8.8.0=he654da7_1
   - cycler=0.11.0=pyhd3eb1b0_0
   - datrie=0.8.2=py310ha75aee5_8
@@ -245,7 +242,6 @@ dependencies:
   - libsystemd0=255=h3516f8a_1
   - libthrift=0.19.0=hb90f79a_1
   - libtiff=4.6.0=h1dd3fc0_3
-  - libtorch=2.1.2=cuda112_hce05544_300
   - libutf8proc=2.8.0=hf23e847_1
   - libuuid=2.38.1=h0b41bf4_0
   - libuv=1.48.0=hd590300_0
@@ -253,7 +249,6 @@ dependencies:
   - libwebp-base=1.3.2=h5eee18b_0
   - libxcb=1.15=h7f8727e_0
   - libxcrypt=4.4.36=hd590300_1
-  - libxgboost=2.1.2=cuda118_h09a87be_0
   - libxkbcommon=1.6.0=h5d7e998_0
   - libxml2=2.12.7=hc051c1a_1
   - libzlib=1.2.13=hd590300_5
@@ -337,7 +332,6 @@ dependencies:
   - pulp=2.7.0=py310hff52083_1
   - pulseaudio-client=16.1=hb77b528_5
   - pure_eval=0.2.2=pyhd8ed1ab_0
-  - py-xgboost=2.1.2=cuda118_pyh40095f8_0
   - py4j=0.10.9.7=pyhd8ed1ab_0
   - pyautogui=0.9.54=py310hff52083_3
   - pybedtools=0.9.1=py310h2b6aa90_0
@@ -722,10 +716,6 @@ dependencies:
       - multidict==6.0.5
       - mypy-extensions==1.1.0
       - namex==0.0.7
-      - nvidia-cublas-cu12==12.4.2.65
-      - nvidia-cuda-nvrtc-cu12==12.4.99
-      - nvidia-cuda-runtime-cu12==12.4.99
-      - nvidia-cudnn-cu12==8.9.7.29
       - nvidia-ml-py==12.535.133
       - oauthlib==3.2.2
       - openai==1.91.0
