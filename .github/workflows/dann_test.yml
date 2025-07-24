@@ -28,7 +28,8 @@ jobs:
     - name: Run tests for DANN-cfDNA modeling fitting
       shell: bash -l {0}
       run: |
-        conda run -n DANN_cfDNA_env pip install pytest pytest-cov
+        conda activate DANN_cfDNA_env
+        pip install -e .
         conda run -n DANN_cfDNA_env pytest --junitxml=test_results.xml --cov=DANN_cfDNA --cov-report=xml tests/
 
     - name: Upload test results
