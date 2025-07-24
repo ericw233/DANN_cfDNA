@@ -7,7 +7,6 @@ channels:
 dependencies:
   - _libgcc_mutex=0.1=conda_forge
   - _openmp_mutex=4.5=2_kmp_llvm
-  - _py-xgboost-mutex=2.0=gpu_0
   - _r-mutex=1.0.1=anacondar_1
   - _sysroot_linux-64_curr_repodata_hack=3=h69a702a_16
   - aioeasywebdav=2.4.0=pyha770c72_0
@@ -633,7 +632,6 @@ dependencies:
   - xcb-util-keysyms=0.4.0=h8ee46fc_1
   - xcb-util-renderutil=0.3.9=hd590300_1
   - xcb-util-wm=0.4.1=h8ee46fc_1
-  - xgboost=2.1.2
   - xkeyboard-config=2.41=hd590300_0
   - xlrd=2.0.1=pyhd8ed1ab_3
   - xorg-fixesproto=5.0=h7f98852_1002
